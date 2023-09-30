@@ -1,38 +1,68 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+  body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
-}
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+  .app-container {
+    display: flex;
+    gap: 10px;
+    border-radius: 10px;
+    overflow: hidden;
   }
-  to {
-    transform: rotate(360deg);
+
+  .block {
+    padding: 10px;
+    box-sizing: border-box;
   }
-}
+
+  .left-block {
+    flex-grow: 1;
+    height: 480px;
+    background-color: #f0f0f0;
+    border-radius: 10px 0 0 10px;
+  }
+  
+  .right-block {
+    width: 520px;
+    background-color: #e0e0e0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between; /* Distribute space evenly */
+    align-items: center; /* Center items vertically */
+    border-radius: 0 10px 10px 0;
+  }
+  .box {
+    height: 70px; /* Set the height as per your requirement */
+    width: 100%; /* Occupy full width */
+    background-color: #ccc; /* Add your preferred background color */
+    margin-bottom: 10px; /* Add some space between the boxes */
+  }
+  
+
+  .section {
+    padding: 10px;
+    flex: 1;
+    box-sizing: border-box;
+  }
+
+  .section h2 {
+    margin: 0;
+    font-size: 1.5em;
+    text-align: center; /* Center the text */
+    width: 100%; /* Make sure text takes full width */
+  }
+
+  .bus, .arrival {
+    flex: 1; /* Each section takes equal space */
+  }
+  
+  .destination {
+    flex: 2; /* Twice the height of bus and arrival sections */
+  }
+
+  .info, .icons {
+    /* Add styles for info and icons here */
+  }
