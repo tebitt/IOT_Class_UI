@@ -68,41 +68,39 @@ function App() {
     fetchBusData();  
     const interval = setInterval(() => {
       fetchBusData();
-    }, 60000);
+    }, 1000);
   
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const updateBusData = () => {
+    const interval = setInterval(() => {
       setCurrentTime(new Date());
       setBusData((prevData) =>
-        prevData.map((bus) => {
-          if (bus.ETA !== "Soon") {
-            return { ...bus, ETA: bus.ETA > 1 ? bus.ETA - 1 : "Soon" };
-          }
-          return bus;
-        })
+        prevData.map((bus) => ({
+          ...bus,
+          ETA: bus.ETA > 0 ? bus.ETA - 1 : bus.ETA === "Soon" ? "Soon" : 0,
+        }))
       );
   
-      // Remove buses with ETA "Soon" after 1 minute
-      setBusData((prevData) =>
-        prevData.filter((bus) => {
-          if (bus.ETA === "Soon") {
-            return bus.timestamp > Date.now() - 60000; // Keep buses added within the last minute
-          }
-          return true;
-        })
-      );
-    };
-
-    // Update time and handle ETA
-    const interval = setInterval(updateBusData, 60000);
+      // Remove buses with ETA 0 or "Soon"
+      setBusData((prevData) => prevData.filter((bus) => bus.ETA !== 0 && bus.ETA !== "Soon"));
   
-    return () => {
-      clearInterval(interval);
-      };
-    }, [busData]);
+      // Check if any bus has reached 1 minute
+      const busesAtOneMinute = busData.filter((bus) => bus.ETA === 1);
+  
+      if (busesAtOneMinute.length > 0) {
+        busesAtOneMinute.forEach((bus) => {
+          const data = JSON.stringify({ Bus_No: bus.Bus_No, Destination: bus.Destination });
+  
+          // Send data using sendBeacon
+          navigator.sendBeacon('/tts', data);
+        });
+      }
+    }, 1000); // Update time and remove completed buses every minute
+  
+    return () => clearInterval(interval);
+  }, [busData]);
   
 
   useEffect(() => {
@@ -114,25 +112,6 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
-
-useEffect(() => {
-  const interval = setInterval(() => {
-    setCurrentTime(new Date());
-    setBusData((prevData) =>
-      prevData.map((bus) => ({
-        ...bus,
-        ETA: bus.ETA > 0 ? bus.ETA - 1 : bus.ETA === "Soon" ? "Soon" : 0,
-      }))
-    );
-
-    // Remove buses with ETA 0 or "Soon"
-    setBusData((prevData) => prevData.filter((bus) => bus.ETA !== 0 && bus.ETA !== "Soon"));
-  }, 60000); // Update time and remove completed buses every minute
-
-  return () => clearInterval(interval);
-}, []);
-
-
   // ... rest of the code remains the same
 
   const options = { hour: '2-digit', minute: '2-digit', hour12: false };
@@ -172,13 +151,13 @@ useEffect(() => {
                     </tr>
                   </thead>
                   <tbody>
-                  {busData.slice(0, 5).map((bus) => (
-                        <tr key={`${bus.Bus_No}-${bus.Destination}`} className='child-wrapper'>
-                          <td>{bus.Bus_No}</td>
-                          <td>{bus.Destination}</td>
-                          <td>{bus.ETA === 0 ? "Soon" : bus.ETA === "Soon" ? bus.ETA : bus.ETA + " min"}</td>
-                        </tr>
-                      ))}
+                    {busData.slice(0, 5).map((bus, index) => ( // <-- Added an 'index' parameter
+                      <tr key={`${bus.Bus_No}-${bus.Destination}-${index}`} className='child-wrapper'>
+                        <td>{bus.Bus_No}</td>
+                        <td>{bus.Destination}</td>
+                        <td>{bus.ETA === 0 ? "Soon" : bus.ETA === "Soon" ? bus.ETA : bus.ETA + " min"}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
