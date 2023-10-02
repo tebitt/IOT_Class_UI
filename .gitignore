@@ -8,6 +8,7 @@
 # testing
 /coverage
 test.py
+busss - Sheet1.csv
 # production
 /build
 yarn.lock
