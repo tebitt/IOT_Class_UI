@@ -3,9 +3,9 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import requests
 import os
-import csv
 import numpy as np
 import pandas as pd
+from flask import Flask, request
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
@@ -16,8 +16,10 @@ cors = CORS(app, resources={r"/rain": {"origins": "*"}, r"/temp": {"origins": "*
 def get_rainfall():
     load_dotenv()
     api_key = os.getenv('WEATHERBIT_KEY')  # Replace with your API key
-    lat = request.args.get('lat')
-    lng = request.args.get('lng')
+    lat = os.getenv('SAMYAN_LAT')
+    lng = os.getenv('SAMYAN_LNG')
+    # lat = request.args.get('lat')
+    # lng = request.args.get('lng')
 
     if not lat or not lng:
         return {'error': 'Latitude and longitude are required parameters.'}
@@ -51,8 +53,11 @@ def get_rainfall():
 def get_temp():
     load_dotenv()
     api_key = os.getenv('WEATHER_KEY')  # Replace with your API key
-    lat = request.args.get('lat')
-    lng = request.args.get('lng')
+    lat = os.getenv('SAMYAN_LAT')
+    lng = os.getenv('SAMYAN_LNG')
+    # lat = request.args.get('lat')
+    # lng = request.args.get('lng')
+
 
     if not lat or not lng:
         return {'error': 'Latitude and longitude are required parameters.'}
@@ -68,7 +73,7 @@ def get_temp():
     
 @app.route('/bus')
 def bus_info():
-    df = pd.read_csv('busss - Sheet1.csv', header=None)
+    df = pd.read_csv('buss.csv', header=None)
     df['Bus_No'] = df[0].str.split(' ').str[0]
 
     sample = df.sample(1)
@@ -84,3 +89,6 @@ def bus_info():
     for i, d in enumerate(data.to_dict('records')):
         output[i] = d
     return output[0]
+
+if __name__ == '__main__':
+    app.run(port='5000', debug=True)

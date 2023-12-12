@@ -16,28 +16,40 @@ function getFormattedDate() {
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentTemp, setTemp] = useState(0);
-  const [currentRain, setRain] = useState(0);
   const [currentLocale, setLocale] = useState('Bangkok');
   const [currentMsg, setMsg] = useState('No rain warning');
   const [busData, setBusData] = useState([]);
+  const [busCounter, setBusCounter] = useState(0); // New state for counter
 
-  
- 
+
+
+
   const fetchData = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
         
-        fetch(`/temp?lat=${latitude}&lng=${longitude}`)
-          .then(res => res.json())
-          .then(data => {
-            setTemp(data.temp);
-          });
-        
+        const endpoint = "https://api.netpie.io/v2/device/shadow/data";
+        const headers = {
+          "Authorization": "Device 5c34bc26-d56f-4853-b323-6d236d5922e0:rZphV2Uh3L4RdHgHVveY6BMatqE8V9Rb"
+        };
+  
+        fetch(endpoint, { headers })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.data && typeof data.data.Temp !== 'undefined') {
+            setTemp(data.data.Temp);
+          } else {
+            console.error('Temperature data not found in response');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+
         fetch(`/rain?lat=${latitude}&lng=${longitude}`)
           .then(res => res.json())
           .then(data => {
-            setRain(data.percip);
             setLocale(data.location);
             setMsg(data.msg);
           });
@@ -51,7 +63,8 @@ function App() {
       .then((data) => {
         const existingBus = busData.find((bus) => bus.Bus_No === data.Bus_No);
         if (!existingBus) {
-          setBusData((prevData) => [...prevData, { ...data, id: Date.now() }]); // Assign a unique id
+          setBusData((prevData) => [...prevData, { ...data, id: busCounter }]); // Use busCounter as part of the key
+          setBusCounter(busCounter + 1); // Increment the counter
         } else {
           if (data.ETA < existingBus.ETA) {
             setBusData((prevData) =>
@@ -62,14 +75,14 @@ function App() {
           }
         }
       });
-  };  
-  
+  };
+
   useEffect(() => {
-    fetchBusData();  
+    fetchBusData();
     const interval = setInterval(() => {
       fetchBusData();
-    }, 1000);
-  
+    }, 10000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -82,26 +95,26 @@ function App() {
           ETA: bus.ETA > 0 ? bus.ETA - 1 : bus.ETA === "Soon" ? "Soon" : 0,
         }))
       );
-  
+
       // Remove buses with ETA 0 or "Soon"
       setBusData((prevData) => prevData.filter((bus) => bus.ETA !== 0 && bus.ETA !== "Soon"));
-  
+
       // Check if any bus has reached 1 minute
       const busesAtOneMinute = busData.filter((bus) => bus.ETA === 1);
-  
+
       if (busesAtOneMinute.length > 0) {
         busesAtOneMinute.forEach((bus) => {
-          const data = JSON.stringify({ Bus_No: bus.Bus_No, Destination: bus.Destination });
-  
+          const data = JSON.stringify({ Bus_No: bus.Bus_No });
+
           // Send data using sendBeacon
-          navigator.sendBeacon('/tts', data);
+          navigator.sendBeacon('http://172.20.10.7:5003/tts', data);
         });
       }
     }, 1000); // Update time and remove completed buses every minute
-  
+
     return () => clearInterval(interval);
   }, [busData]);
-  
+
 
   useEffect(() => {
     fetchData(); // Fetch data once before starting the interval
@@ -131,17 +144,19 @@ function App() {
                 <p className='box-text-date'>{getFormattedDate()}</p>
 
               </div>
-              <div className="box"></div>
+              <div className="box">
+                <img className="bus-location" alt="" src="/BUS_LOCATION.png" />
+              </div>
               <div className="box bottom">
-                <p className='box-text'>{currentLocale}</p>  
-                <p className='box-text-temp'>{currentTemp}°</p>  
+                <p className='box-text'>{currentLocale}</p>
+                <p className='box-text-temp'>{currentTemp}°</p>
                 <p className='box-text-msg'>{currentMsg}</p>
               </div>
             </div>
           </div>
           <div className="block right-block">
-          <div className="section bus">
-          <div className="bus-table-container">
+            <div className="section bus">
+              <div className="bus-table-container">
                 <table className="bus-table">
                   <thead>
                     <tr className="header-wrapper">
@@ -151,7 +166,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {busData.slice(0, 5).map((bus, index) => ( // <-- Added an 'index' parameter
+                    {busData.slice(0, 5).map((bus, index) => (
                       <tr key={`${bus.Bus_No}-${bus.Destination}-${index}`} className='child-wrapper'>
                         <td>{bus.Bus_No}</td>
                         <td>{bus.Destination}</td>
@@ -164,9 +179,9 @@ function App() {
             </div>
           </div>
         </div>
-      </header>
-    </div>
+      </header >
+    </div >
   );
-} 
+}
 
 export default App;
